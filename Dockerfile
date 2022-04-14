@@ -1,4 +1,4 @@
-FROM node:12-bullseye-slim 
+FROM node:14-bullseye-slim 
 
 # Metadata params
 ARG BUILD_DATE
@@ -22,7 +22,7 @@ LABEL   org.opencontainers.image.authors="Michele D'Amico, michele.damico@agid.g
         org.opencontainers.image.base.name="italia/spid-saml-check"
 
 # Update and install utilities
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
         wget \
         curl \
         unzip \
@@ -38,22 +38,18 @@ RUN apt-get update && apt-get install -y \
         libffi-dev \
         python3-virtualenv \
         build-essential  \
-        python3-dev cargo
+        python3-dev \
+        cargo; \
+        apt-get clean -y; \
+        rm -rf /var/lib/apt/lists/*
 
-RUN pip3 install setuptools_rust cryptography
-
-
-# Upgrade pip
-RUN pip3 install --upgrade pip
-
-# Install spid-sp-test
-RUN pip3 install spid-sp-test --no-cache
+RUN pip3 install --upgrade --no-cache-dir setuptools_rust cryptography pip spid-sp-test
 
 # Set the working directory
 WORKDIR /spid-saml-check
 
 # Copy the current directory to /spid-validator
-ADD . /spid-saml-check
+COPY ./spid-validator/ /spid-saml-check/spid-validator/
 
 # Create directory for tests data
 RUN mkdir /spid-saml-check/data
@@ -69,6 +65,5 @@ RUN cd /spid-saml-check/spid-validator && \
 
 # Ports exposed
 EXPOSE ${EXPOSE_HTTPS_PORT}
-
 
 ENTRYPOINT cd spid-validator && npm run start-prod
