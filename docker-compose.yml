@@ -1,5 +1,6 @@
 services:
   spid-saml-check:
+    image: spid-saml-check
     build: .
     container_name: spid-saml-check
     restart: unless-stopped
